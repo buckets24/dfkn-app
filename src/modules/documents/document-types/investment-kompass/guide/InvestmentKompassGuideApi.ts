@@ -1,0 +1,33 @@
+export enum InvestmentKompassGuideNames {
+  SEITE_1 = 'SEITE_1',
+
+  SEITE_2_TEIL_1 = 'SEITE_2_TEIL_1',
+  SEITE_2_TEIL_2 = 'SEITE_2_TEIL_2',
+
+  SEITE_3_TEIL_1 = 'SEITE_3_TEIL_1',
+  SEITE_3_TEIL_2 = 'SEITE_3_TEIL_2',
+
+  SEITE_4_TEIL_1 = 'SEITE_4_TEIL_1',
+  SEITE_4_TEIL_2 = 'SEITE_4_TEIL_2',
+
+  SEITE_5_TEIL_1 = 'SEITE_5_TEIL_1',
+  SEITE_5_TEIL_2 = 'SEITE_5_TEIL_2',
+
+  SEITE_6_TEIL_1 = 'SEITE_6_TEIL_1',
+  SEITE_6_TEIL_2 = 'SEITE_6_TEIL_2',
+
+  SEITE_7_FRAGE_1 = 'SEITE_7_FRAGE_1',
+  SEITE_7_FRAGE_2 = 'SEITE_7_FRAGE_2',
+  SEITE_7_FRAGE_3 = 'SEITE_7_FRAGE_3',
+  SEITE_7_FRAGE_4 = 'SEITE_7_FRAGE_4',
+
+  SEITE_8_FRAGE_5 = 'SEITE_8_FRAGE_5',
+  SEITE_8_FRAGE_6_TEIL_1 = 'SEITE_8_FRAGE_6_TEIL_1',
+  SEITE_8_FRAGE_6_TEIL_2 = 'SEITE_8_FRAGE_6_TEIL_2',
+
+  ZUM_SCHLUSS = 'ZUM_SCHLUSS',
+}
+
+export interface InvestmentKompassGuideProps {
+  name: InvestmentKompassGuideNames;
+}

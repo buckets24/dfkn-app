@@ -1,0 +1,13 @@
+import { Icon, IconProps } from '@chakra-ui/react';
+import { FC } from 'react';
+
+export const MicIcon: FC<Omit<IconProps, 'children' | 'css'>> = (props) => {
+  return (
+    <Icon width="14px" height="19px" viewBox="0 0 14 19" fill="none" {...props}>
+      <path
+        d="M7 12C8.66 12 9.99 10.66 9.99 9L10 3C10 1.34 8.66 0 7 0C5.34 0 4 1.34 4 3V9C4 10.66 5.34 12 7 12ZM12.3 9C12.3 12 9.76 14.1 7 14.1C4.24 14.1 1.7 12 1.7 9H0C0 12.41 2.72 15.23 6 15.72V19H8V15.72C11.28 15.24 14 12.42 14 9H12.3Z"
+        fill="currentColor"
+      />
+    </Icon>
+  );
+};

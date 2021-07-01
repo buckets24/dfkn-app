@@ -1,0 +1,49 @@
+{
+  "api": {
+    "dfknordnessy": {
+      "service": "AppSync",
+      "providerPlugin": "awscloudformation",
+      "output": {
+        "authConfig": {
+          "defaultAuthentication": {
+            "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+            "userPoolConfig": {
+              "userPoolId": "authdfknordnessyaa527658aa527658"
+            }
+          },
+          "additionalAuthenticationProviders": [
+            {
+              "authenticationType": "API_KEY",
+              "apiKeyConfig": {
+                "apiKeyExpirationDays": 7,
+                "description": "Public API key for dfknordnessy GraphQP api"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "auth": {
+    "dfknordnessyaa527658aa527658": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "function",
+          "resourceName": "dfknordnessyaa527658aa527658CustomMessage",
+          "triggerProvider": "Cognito",
+          "attributes": ["Arn", "Name"]
+        }
+      ],
+      "customAuth": false
+    }
+  },
+  "function": {
+    "dfknordnessyaa527658aa527658CustomMessage": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+package-lock.json
+public
+node_modules
+.next
+queries.ts
+mutations.ts
+subscriptions.ts
+API.ts

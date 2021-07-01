@@ -1,0 +1,15 @@
+{
+  "trigger": true,
+  "modules": ["custom"],
+  "parentResource": "dfknordnessyaa527658aa527658",
+  "functionName": "dfknordnessyaa527658aa527658CustomMessage",
+  "resourceName": "dfknordnessyaa527658aa527658CustomMessage",
+  "parentStack": "auth",
+  "triggerEnvs": [],
+  "triggerDir": "C:\\Users\\jmcru\\AppData\\Roaming\\nvm\\v12.18.0\\node_modules\\@aws-amplify\\cli\\node_modules\\amplify-category-auth\\provider-utils\\awscloudformation\\triggers\\CustomMessage",
+  "triggerTemplate": "CustomMessage.json.ejs",
+  "triggerEventPath": "CustomMessage.event.json",
+  "roleName": "dfknordnessyaa527658aa527658CustomMessage",
+  "skipEdit": true,
+  "enableCors": false
+}

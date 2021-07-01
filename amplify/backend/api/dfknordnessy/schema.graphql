@@ -1,0 +1,442 @@
+enum CognitoUserStatusType {
+  ARCHIVED
+  COMPROMISED
+  CONFIRMED
+  FORCE_CHANGE_PASSWORD
+  RESET_REQUIRED
+  UNCONFIRMED
+  UNKNOWN
+}
+
+enum AccountStatus {
+  EMAIL_SENT
+  ENABLED
+  DISABLED
+}
+
+enum ContractorType {
+  PRIMARY
+  SECONDARY
+}
+
+enum ROLES {
+  Admin
+  Director
+  OfficeManager
+  AgentLR2
+  AgentLR1
+  AgentR
+  FinancialAdvisor
+  InsuranceAdvisor
+  Client
+}
+
+type AgentModel
+  @model
+  @auth(
+    rules: [
+      { allow: public, operations: [read] }
+      # Allows the logged in cognito user to read his/her own model
+      { allow: owner, ownerField: "sub", operations: [read, update] }
+      { allow: owner, ownerField: "owner", operations: [read, update] }
+      # Allows the accounts of said group to manage agents
+      {
+        allow: groups
+        groups: ["Admin", "Director", "OfficeManager", "FinancialAdvisor", "InsuranceAdvisor"]
+        operations: [read, create, update, delete]
+      }
+    ]
+  )
+  @key(name: "bySub", fields: ["sub"], queryField: "getAgentBySub")
+  @key(name: "byEmail", fields: ["email"], queryField: "getAgentByEmail") {
+  id: ID!
+  sub: String
+  firstName: String!
+  lastName: String!
+  salutation: String!
+  email: String!
+  phone: String
+  streetHouseNumber: String
+  postCode: String
+  place: String
+  role: ROLES!
+
+  # will be converted to a connection to a new model soon
+  subsidiary: String
+
+  active: Boolean
+  cognitoStatus: CognitoUserStatusType
+  status: AccountStatus
+
+  owner: String
+  meetingsAsModerator: [MeetingModel] @connection(keyName: "byModeratorId", fields: ["id"])
+  # meetingsAsGuest: [GuestAgentMeetingModel] @connection(keyName: "byAgentId", fields: ["id"])
+}
+
+type Contractor {
+  firstName: String
+  lastName: String
+  salutation: String
+  email: String
+  telephone: String
+  fax: String
+  mobile: String
+  maritalStatus: String
+  country: String
+  streetHouseNumber: String
+  postCode: String
+  place: String
+  addressValidDate: String
+  birthPlace: String
+  birthday: AWSDateTime
+  title: String
+  nationality: String
+  taxId: String
+}
+
+type ProductInfoImmposparen {
+  oneTimeInvestment: Boolean
+  proportionalInvestment: Boolean
+}
+
+type ClientModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      { allow: owner, ownerField: "owner", operations: [read, update, delete] }
+      { allow: owner, ownerField: "sub", operations: [read, update] }
+      {
+        allow: groups
+        groups: ["Director", "AgentLR2", "AgentLR1", "AgentR", "FinancialAdvisor", "InsuranceAdvisor", "OfficeManager"]
+        operations: [create]
+      }
+      # { allow: groups, groups: ["OfficeManager"], operations: [read, update, delete] }
+      { allow: owner, ownerField: "editors", operations: [read, update] }
+      { allow: public, operations: [read, update] }
+    ]
+  )
+  @key(name: "bySub", fields: ["sub"], queryField: "getClientBySub")
+  @key(name: "byOwner", fields: ["owner", "lastName"], queryField: "getClientsByOwner")
+  @key(name: "byEmail", fields: ["email"], queryField: "getClientByEmail") {
+  id: ID!
+  sub: String # Client, cognito user id
+  firstName: String!
+  lastName: String!
+  salutation: String
+  email: String!
+  telephone: String
+  fax: String
+  mobile: String
+  maritalStatus: String
+  country: String
+  streetHouseNumber: String
+  postCode: String
+  place: String
+  addressValidDate: String
+  birthPlace: String
+  birthday: AWSDateTime
+  title: String
+  nationality: String
+  taxId: String
+  emailVerified: Boolean
+  active: Boolean
+  contractor: Contractor
+  subsidiary: String
+
+  cognitoStatus: CognitoUserStatusType
+  status: AccountStatus
+
+  owner: String # Agent
+  editors: [String]
+
+  meetings: [MeetingModel] @connection(keyName: "byClientId", fields: ["id"])
+  onlineDocuments: [OnlineDocumentModel] @connection(keyName: "byClientId", fields: ["id"])
+  agentDocuments: [OnlineDocumentModel] @connection(keyName: "byClientId", fields: ["id"])
+
+  productInfoImmposparen: ProductInfoImmposparen
+}
+
+type ClientActivityModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      { allow: owner, ownerField: "owner", operations: [read, update, delete] }
+      {
+        allow: groups
+        groups: ["Director", "AgentLR2", "AgentLR1", "AgentR", "FinancialAdvisor", "InsuranceAdvisor", "OfficeManager"]
+        operations: [create]
+      }
+      { allow: owner, ownerField: "editors", operations: [read, update] }
+    ]
+  )
+  @key(
+    name: "byOwnerSortedByCreatedAt"
+    fields: ["owner", "createdAt"]
+    queryField: "getActivitiesByOwnerSortedByCreatedAt"
+  )
+  @key(
+    name: "byClientIdSortedByCreatedAt"
+    fields: ["clientId", "createdAt"]
+    queryField: "getActivitiesByClientIdSortedByCreatedAt"
+  ) {
+  id: ID!
+  clientId: ID!
+  client: ClientModel! @connection(fields: ["clientId"])
+
+  dueDate: AWSDateTime
+  description: AWSJSON! # JSON.stringify the values from Rich Text Editor
+  done: String
+  priority: String
+  editors: [String]
+
+  createdAt: AWSDateTime!
+  owner: ID! # Owner of the activity
+  updatedBy: ID! # Last one to update the activity
+}
+
+type MeetingModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      {
+        allow: groups
+        groups: ["Director", "AgentLR2", "AgentLR1", "AgentR", "FinancialAdvisor", "InsuranceAdvisor", "OfficeManager"]
+        operations: [create]
+      }
+      { allow: owner, ownerField: "owner", operations: [read, update, delete] }
+      { allow: owner, ownerField: "editors", operations: [read, update] }
+      { allow: public, operations: [read] }
+    ]
+  )
+  @key(name: "byModeratorId", fields: ["moderatorId"])
+  @key(name: "byOwner", fields: ["owner"], queryField: "getMeetingsByOwner")
+  @key(name: "byClientId", fields: ["clientId"], queryField: "getMeetingsByClientId") {
+  id: ID!
+  owner: String!
+
+  meetingDateTime: AWSDateTime!
+
+  moderatorId: ID!
+  # Not the best solution but sooo much simpler compared to having to add auth rules per field of the AgentModel
+  moderatorName: String
+
+  clientId: ID!
+  client: ClientModel! @connection(fields: ["clientId"])
+
+  guestAgents: [GuestAgentMeetingModel] @connection(keyName: "byMeetingId", fields: ["id"])
+
+  editors: [String] # Guest Agents
+  # The below properties serves as the Active meeting data
+  activeDocumentId: ID
+
+  scrollPos: Float
+  scrollPosPercent: Float
+}
+
+enum ParticipantType {
+  AGENT
+  CLIENT
+}
+
+# Create a join model and disable queries as you don't need them
+# and can query through AgentModel.meetingsAsGuest and MeetingModel.
+type GuestAgentMeetingModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      { allow: public, operations: [read] }
+      { allow: private, operations: [read] }
+    ]
+  )
+  @key(name: "byMeetingId", fields: ["meetingId", "agentId"])
+  @key(name: "byAgentId", fields: ["agentId", "meetingId"]) {
+  id: ID!
+  meetingId: ID!
+  agentId: ID!
+}
+
+enum OnlineDocumentType {
+  INVESTMENT_KOMPASS
+  EINMALANLAGE_ZEICHNUNGSSCHEIN
+  EINMALANLAGE_GELDWAESCHEGESETZ
+  RATIERLICH_ZEICHNUNGSSCHEIN
+  RATIERLICH_GELDWAESCHEGESETZ
+  ANGEBOT_IMMOSPAREN
+  RBS_SCHEIN
+  RBS_SCHEIN_FUNDING
+  RBS_SCHEIN_OTHER
+  RBS_SCHEIN_FULLSERVICE
+  RBS_SCHEIN_DFK_HOME
+  RBS_SCHEIN_DFK_SAFE
+}
+
+enum OnlineDocumentStatus {
+  CLEAN
+  INCOMPLETE
+  COMPLETE
+  LOCK
+}
+
+type OnlineDocumentModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      {
+        allow: groups
+        groups: ["Director", "OfficeManager", "AgentLR2", "AgentLR1", "AgentR", "FinancialAdvisor", "InsuranceAdvisor"]
+        operations: [create]
+      }
+      { allow: owner, ownerField: "owner", operations: [read, update, delete] }
+      { allow: owner, ownerField: "editors", operations: [read, update] }
+      { allow: public, operations: [read, update] }
+    ]
+  )
+  @key(name: "byClientId", fields: ["clientId", "version"], queryField: "getOnlineDocumentsByClientId") {
+  id: ID!
+  title: String!
+  type: OnlineDocumentType!
+  status: OnlineDocumentStatus!
+
+  values: AWSJSON! # JSON.stringify the values from formik
+  clientId: ID! # Owner of the document
+  client: ClientModel! @connection(fields: ["clientId"])
+
+  contractor: ContractorType
+
+  owner: String! # Agent
+  editors: [String] # Contains the Client and other Agents
+  patches: [DocumentPatch]
+    @connection(keyName: "documentLatestPatch", fields: ["id"])
+    # README These authentication rules have been customized in the resolver OnlineDocumentModel.patches.res.vtl.
+    @auth(
+      rules: [
+        { allow: groups, groups: ["Admin"], operations: [read] }
+        { allow: owner, ownerField: "owner", operations: [read, create] }
+        { allow: owner, ownerField: "editors", operations: [read, create] }
+      ]
+    )
+
+  isVisibleToClient: Boolean
+
+  version: Int
+}
+
+# TODO Use this for all document patch queries
+type DocumentPatch
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      { allow: private, operations: [create] }
+      { allow: public, operations: [create, read, update] }
+    ]
+  )
+  @key(name: "documentIdIndex", fields: ["documentId"], queryField: "patchesByDocumentId")
+  @key(name: "documentLatestPatch", fields: ["documentId", "createdAt"], queryField: "getLatestPatchByDocumentId") {
+  id: ID!
+  patch: AWSJSON!
+  documentId: ID!
+  # A UUID generated by the instance of the browser that created it. This is to help identify "uniqueness" even between the same authenticated user
+  uniqueEditorInstance: String
+
+  # owner: String
+  # editors: [String] # A mix of the ClientSub and AgentSubs who are the participants of the meeting
+  # TODO: Rename to authorId
+  author: ID!
+  createdAt: AWSDateTime!
+}
+
+type OnlineDocumentArchiveModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, delete] }
+      {
+        allow: groups
+        groups: ["Director", "OfficeManager", "AgentLR2", "AgentLR1", "AgentR", "FinancialAdvisor", "InsuranceAdvisor"]
+        operations: [create]
+      }
+      { allow: owner, ownerField: "owner", operations: [read, delete] }
+      { allow: owner, ownerField: "editors", operations: [read] }
+      { allow: public, operations: [read] }
+    ]
+  )
+  @key(name: "byClientId", fields: ["clientId", "version"], queryField: "getOnlineDocumentsArchiveByClientId") {
+  id: ID!
+  documentId: ID!
+  title: String!
+  type: OnlineDocumentType!
+
+  values: AWSJSON! # JSON.stringify the values from formik
+  clientId: ID! # Owner of the document
+  client: ClientModel! @connection(fields: ["clientId"])
+
+  contractor: ContractorType
+
+  owner: String! # Agent
+  editors: [String] # Contains the Client and other Agents
+  version: Int
+}
+
+type SignatureTokenModel
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["Admin"], operations: [read, update, delete] }
+      {
+        allow: groups
+        groups: [
+          "Director"
+          "OfficeManager"
+          "AgentLR2"
+          "AgentLR1"
+          "AgentR"
+          "Client"
+          "FinancialAdvisor"
+          "InsuranceAdvisor"
+          "OfficeManager"
+        ]
+        operations: [read, create, update, delete]
+      }
+      { allow: public, operations: [read, update, delete] }
+    ]
+  )
+  @key(name: "byDocumentId", fields: ["documentId"], queryField: "getSignatureTokenByDocumentId") {
+  id: ID!
+  pin: String
+  documentId: ID!
+  fieldName: String
+  authorId: ID!
+}
+
+# Might not be working as expected. See docs on creating custom subscriptions
+type Subscription {
+  # START OF CLIENT MODEL
+  onCreateClientModelByOwner(owner: String!): ClientModel @aws_subscribe(mutations: ["createClientModel"])
+  onUpdateClientModelByOwner(owner: String!): ClientModel @aws_subscribe(mutations: ["updateClientModel"])
+  onDeleteClientModelByOwner(owner: String!): ClientModel @aws_subscribe(mutations: ["deleteClientModel"])
+  # END OF CLIENT MODEL
+
+  # START OF MEETING MODEL
+  onUpdateMeetingModelByEditors(editors: [String]!): MeetingModel @aws_subscribe(mutations: ["updateMeetingModel"])
+
+  onCreateMeetingModelByOwner(owner: String!): MeetingModel @aws_subscribe(mutations: ["createMeetingModel"])
+  onUpdateMeetingModelByOwner(owner: String!): MeetingModel @aws_subscribe(mutations: ["updateMeetingModel"])
+  onDeleteMeetingModelByOwner(owner: String!): MeetingModel @aws_subscribe(mutations: ["deleteMeetingModel"])
+  # END OF MEETING MODEL
+
+  # START OF ONLINE DOCUMENT MODEL
+  onCreateOnlineDocumentModelByEditors(editors: [String]!): OnlineDocumentModel
+    @aws_subscribe(mutations: ["createOnlineDocumentModel"])
+  onUpdateOnlineDocumentModelByEditors(editors: [String]!): OnlineDocumentModel
+    @aws_subscribe(mutations: ["updateOnlineDocumentModel"])
+  # END OF ONLINE DOCUMENT MODEL
+
+  # START OF DOCUMENT PATCHES BY ONLINE DOCUMENT
+  onCreateDocumentPatchByDocumentId(documentId: ID!): DocumentPatch @aws_subscribe(mutations: ["createDocumentPatch"])
+}
